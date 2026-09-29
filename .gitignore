@@ -1,0 +1,19 @@
+# DriverKit and Project Builder output
+*_obj/
+sym/
+Makefile.dependencies
+.lastBuildTime
+*.o
+*.obj
+*.a
+*.dylib
+*.app/
+*.bundle/
+*.debug/
+*.profile/
+*.palette/
+/AHCISCSIDriver.config/
+/AHCISCSIDriver_reloc.tproj/AHCISCSIDriver_reloc
+
+# Host filesystem metadata
+.DS_Store

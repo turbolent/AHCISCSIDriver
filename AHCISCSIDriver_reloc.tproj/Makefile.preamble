@@ -1,0 +1,7 @@
+MAKEFILEDIR = /NextDeveloper/Makefiles/driverkit
+MAKEFILE = Makefile.main_driver
+OTHER_CFLAGS = -Wall -O2
+HEADER_PATHS = -I/NextLibrary/Frameworks/System.framework/Headers
+LOCALMAKEFILEDIR = /LocalDeveloper/Makefiles/driverkit
+LOCALMAKEFILE = Makefile.local_preamble
+-include $(LOCALMAKEFILEDIR)/$(LOCALMAKEFILE)

@@ -1,0 +1,18 @@
+"Title" = "SATA AHCI SCSI Driver";
+"Family" = "SCSI";
+"Version" = "0.3";
+"Instance" = "0";
+"Class Names" = "AHCISCSI";
+"Location" = "";
+"Bus Type" = "PCI";
+"Boot Driver";
+"DMA Channels" = "";
+"Valid DMA Channels" = "";
+"IRQ Levels" = "";
+"Share IRQ Levels" = "No";
+"Auto Detect IDs" = "0x29228086 0x28298086";
+"Cmd Queueing" = "YES";
+"Interrupt Mode" = "MSI";
+"MSI Prompt Retry" = "YES";
+"Deadline Fast Path" = "Auto";
+"Execution Time Clock" = "Auto";

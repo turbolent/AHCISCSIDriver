@@ -1,0 +1,2 @@
+# This loadable kernel driver has no MIG interface and must be wired.
+WIRE

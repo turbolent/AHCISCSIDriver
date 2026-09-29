@@ -1,0 +1,37 @@
+#ifndef AHCI_REGS_H
+#define AHCI_REGS_H
+#define AHCI_CAP 0x00U
+#define AHCI_GHC 0x04U
+#define AHCI_IS 0x08U
+#define AHCI_PI 0x0cU
+#define AHCI_VS 0x10U
+#define AHCI_CAP2 0x24U
+#define AHCI_BOHC 0x28U
+#define AHCI_PORT(p) (0x100U + (p) * 0x80U)
+#define AHCI_CLB 0x00U
+#define AHCI_CLBU 0x04U
+#define AHCI_FB 0x08U
+#define AHCI_FBU 0x0cU
+#define AHCI_PIS 0x10U
+#define AHCI_IE 0x14U
+#define AHCI_CMD 0x18U
+#define AHCI_TFD 0x20U
+#define AHCI_SIG 0x24U
+#define AHCI_SSTS 0x28U
+#define AHCI_SCTL 0x2cU
+#define AHCI_SERR 0x30U
+#define AHCI_SACT 0x34U
+#define AHCI_CI 0x38U
+#define AHCI_ST 1U
+#define AHCI_FRE 0x10U
+#define AHCI_FR 0x4000U
+#define AHCI_CR 0x8000U
+#define AHCI_AE 0x80000000U
+#define AHCI_TFES 0x40000000U
+#define AHCI_DHRS 0x00000001U
+#define AHCI_LINK_CHANGE 0x00400040U /* PRCS, PCS */
+#define AHCI_FATAL 0x79000000U /* TFES, HBFS, HBDS, IFS, OFS */
+#define AHCI_IRQ_MASK 0x7940004bU
+#define AHCI_SIG_ATA 0x00000101U
+#define AHCI_SIG_ATAPI 0xeb140101U
+#endif
