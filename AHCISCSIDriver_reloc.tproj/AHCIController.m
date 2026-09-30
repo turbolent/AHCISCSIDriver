@@ -84,13 +84,35 @@
 {
     IOPCIConfigSpace config;
     unsigned bar, command, next, n=0, cap, seen[8];
+    IOReturn result;
+    id table=[description configTable];
+    const char *location=[table valueForStringKey:"Location"];
     pciDescription = description;
+    IOLog("AHCI: PCI probe Location=\"%s\", interrupt mode=%s\n",
+        location ? location : "",polling ? "Polling" : "MSI");
+    if (location) [table freeString:location];
     memset(&config,0,sizeof(config)); memset(seen,0,sizeof(seen));
-    if ([IODirectDevice getPCIConfigSpace:&config withDeviceDescription:description] != IO_R_SUCCESS ||
-        config.ClassCode != 0x010601 || (config.HeaderType & 0x7f) != 0) return 0;
+    result=[IODirectDevice getPCIConfigSpace:&config withDeviceDescription:description];
+    if (result != IO_R_SUCCESS) {
+        IOLog("AHCI: cannot read PCI configuration (%d); check Auto Detect IDs, Location and PCIBus\n",result);
+        return 0;
+    }
+    if (config.ClassCode != 0x010601) {
+        IOLog("AHCI: PCI %04x:%04x class=%06x is not AHCI 010601; check Location and firmware SATA mode\n",
+            config.VendorID,config.DeviceID,config.ClassCode);
+        return 0;
+    }
+    if ((config.HeaderType & 0x7f) != 0) {
+        IOLog("AHCI: unsupported PCI header type %02x\n",config.HeaderType);
+        return 0;
+    }
     bar = config.BaseAddress[5];
     IOLog("AHCI: PCI class=%06x BAR5=%08x command=%04x\n",config.ClassCode,bar,config.Command);
-    if (!bar || (bar & 7) || (config.BaseAddress[4] & 7) == 4) return 0;
+    if (!bar || (bar & 7) || (config.BaseAddress[4] & 7) == 4) {
+        IOLog("AHCI: BAR5 is not an assigned 32-bit memory BAR (BAR4=%08x BAR5=%08x)\n",
+            config.BaseAddress[4],bar);
+        return 0;
+    }
     if (![self pciRead:4 value:&command]) return 0;
     /* First claim only the generic registers, whose extent AHCI guarantees.
      * Keep the resource description alive for the lifetime of the device. */
@@ -99,28 +121,56 @@
     /* Mach VM pages are 8 KiB on OPENSTEP/i386, independently of AHCI's
      * descriptor segment size. The mapping base may precede BAR5. */
     if (!AHCIMapWindow(bar&~15U,registerLength,vmPageSize,
-        &registerRange.start,&registerRange.size,&registerOffset)) return 0;
-    if ([description setMemoryRangeList:&registerRange num:1] != IO_R_SUCCESS ||
-        [description setInterruptList:(unsigned *)0 num:0] != IO_R_SUCCESS || [description numInterrupts]) return 0;
-    if (!(config.Status & 0x10)) return polling;
+        &registerRange.start,&registerRange.size,&registerOffset)) {
+        IOLog("AHCI: cannot form BAR5 mapping (BAR5=%08x length=%u page=%u)\n",
+            bar,registerLength,vmPageSize);
+        return 0;
+    }
+    result=[description setMemoryRangeList:&registerRange num:1];
+    if (result != IO_R_SUCCESS) {
+        IOLog("AHCI: cannot claim PCI memory %08x + %u bytes (%d)\n",
+            registerRange.start,registerRange.size,result);
+        return 0;
+    }
+    result=[description setInterruptList:(unsigned *)0 num:0];
+    if (result != IO_R_SUCCESS) {
+        IOLog("AHCI: cannot clear legacy IRQ resources (%d)\n",result);
+        return 0;
+    }
+    if ([description numInterrupts]) {
+        IOLog("AHCI: legacy IRQ resources remain after clearing\n");
+        return 0;
+    }
+    if (!(config.Status & 0x10)) {
+        if (!polling) IOLog("AHCI: controller has no PCI capability list; MSI mode requires controller MSI support\n");
+        return polling;
+    }
     if (![self pciRead:0x34 value:&next]) return 0;
     next &= 255;
     while (next) {
-        if (next < 0x40 || next > 0xfc || (next & 3) || n++ >= 48 || (seen[next/32] & (1U << (next%32)))) return 0;
+        if (next < 0x40 || next > 0xfc || (next & 3) || n++ >= 48 || (seen[next/32] & (1U << (next%32)))) {
+            IOLog("AHCI: invalid or cyclic PCI capability list at %02x\n",next);
+            return 0;
+        }
         seen[next/32] |= 1U << (next%32);
         if (![self pciRead:next value:&cap]) return 0;
         if ((cap & 255) == 5) {
-            if (msiOffset) return 0;
+            if (msiOffset) { IOLog("AHCI: duplicate MSI capability at %02x\n",next); return 0; }
             msiOffset = next; msiControl = cap >> 16;
         }
         if ((cap & 255) == 0x11) {
-            if (msixOffset) return 0;
+            if (msixOffset) { IOLog("AHCI: duplicate MSI-X capability at %02x\n",next); return 0; }
             msixOffset = next;
         }
         next = (cap >> 8) & 255;
     }
     if (msiOffset && msiOffset + ((msiControl & 0x80) ? 16 : 12) +
-        ((msiControl & 0x100) ? 8 : 0) > 256) return 0;
+        ((msiControl & 0x100) ? 8 : 0) > 256) {
+        IOLog("AHCI: MSI capability at %02x extends beyond PCI configuration space\n",msiOffset);
+        return 0;
+    }
+    if (!polling && !msiOffset)
+        IOLog("AHCI: controller has no MSI capability; PCIMSI cannot supply missing controller MSI support\n");
     return polling || msiOffset != 0;
 }
 - (int)claimHardware

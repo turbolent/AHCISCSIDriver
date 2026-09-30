@@ -89,7 +89,7 @@ static int sendMessage(port_t port, int code)
         [table freeString:value];
     }
     if (![self configurePCI:description]) {
-        IOLog("AHCI: PCI resources or requested interrupt mode unavailable\n");
+        IOLog("AHCI: PCI setup failed; see preceding diagnostic\n");
         [super free]; return nil;
     }
     queueLock=[[NXLock alloc] init];

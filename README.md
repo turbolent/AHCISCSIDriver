@@ -38,8 +38,10 @@ If the driver is not shown,
 check `Show All Installed Drivers`,
 select `SATA AHCI SCSI Storage Controller`,
 and click Add.
-Then click Expert,
-and set `Location` to the controller's PCI coordinates using this exact syntax:
+Then click Expert. For a controller listed in `Auto Detect IDs`, leave
+`Location` empty so PCIBus selects the matching controller.
+To select a controller explicitly, set `Location` to its PCI coordinates
+using this exact syntax:
 
 ```text
 Dev:<device> Func:<function> Bus:<bus>
