@@ -1,6 +1,6 @@
 #ifndef AHCI_SCSI_H
 #define AHCI_SCSI_H
-#define AHCI_DRIVER_VERSION "0.4"
+#define AHCI_DRIVER_VERSION "0.5"
 #import <driverkit/IOSCSIController.h>
 #import <driverkit/i386/IOPCIDirectDevice.h>
 #import <driverkit/i386/IOPCIDeviceDescription.h>
